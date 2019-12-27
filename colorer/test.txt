@@ -1,0 +1,14 @@
+package bla
+
+import "fmt" // wont work without
+
+func main() {
+    /*
+    fmt.Println("blaha")
+    */
+    fmt.Println("muha")
+    var i int = /*no*/15
+    var b = rune('z') + "hlo\"ppa"
+    fmt.Print(`<i class="num">`)
+    var z = 19//stop
+}
