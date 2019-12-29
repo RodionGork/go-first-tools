@@ -1,16 +1,27 @@
 package main
 
 import "fmt"
+import "sort"
+import "strconv"
 
 var nei = [][]int{{1, 0}, {0, -1}, {-1, 0}, {0, 1}}
 
 var board [][]byte
+var boardsSeen = make(map[string]bool)
+var boardsToCheck = make([]string, 0)
+var congr map[byte]byte
 var width int
 var height int
 
 func main() {
     readBoard()
-    findMoves()
+    congruency()
+    addPosition()
+    for len(boardsToCheck) > 0 {
+        setPosition(boardsToCheck[0])
+        boardsToCheck = boardsToCheck[1:]
+        findMoves()
+    }
 }
 
 func readBoard() {
@@ -18,7 +29,7 @@ func readBoard() {
     var line string
     for true {
         _, e := fmt.Scanf("%s", &line)
-        if e != nil { break }
+        if e != nil || line == "-" { break }
         res = append(res, []byte(line))
     }
     board = res
@@ -26,7 +37,70 @@ func readBoard() {
     width = len(board[0])
 }
 
+func congruency() {
+    congr = make(map[byte]byte)
+    backMap := make(map[string]byte)
+    for _, row := range board {
+        for _, v := range row {
+            if v == '.' || congr[v] != 0 { continue }
+            sq := findSquares(v)
+            sort.Slice(sq, func(i, j int) (bool) {
+                return sq[i][0] * 256 + sq[i][1] < sq[j][0] * 256 + sq[j][1]
+            })
+            x0 := sq[0][0]
+            y0 := sq[0][1]
+            s := ""
+            for _, xy := range sq {
+                s += strconv.Itoa(xy[0] - x0) + strconv.Itoa(xy[1] - y0)
+            }
+            if backMap[s] == 0 {
+                backMap[s] = v
+            }
+            congr[v] = backMap[s]
+        }
+    }
+}
+
+func addPosition() (bool) {
+    s := ""
+    for _, row := range board {
+        for _, v := range row {
+            if v != '.' {
+                s += string(congr[v])
+            } else {
+                s += "."
+            }
+        }
+    }
+    if boardsSeen[s] {
+        return false
+    }
+    boardsSeen[s] = true
+    s = ""
+    for _, row := range board {
+        s += string(row)
+    }
+    boardsToCheck = append(boardsToCheck, s)
+    return true
+}
+
+func setPosition(s string) {
+    for y, row := range board {
+        for x := range row {
+            row[x] = s[y * width + x]
+        }
+    }
+}
+
+func printPosition() {
+    for _, row := range board {
+        fmt.Println(string(row))
+    }
+}
+
 func findMoves() {
+    fmt.Println("Trying position:")
+    printPosition()
     empties := findSquares('.')
     for _, e := range empties {
         for dir, n := range nei {
@@ -36,11 +110,22 @@ func findMoves() {
                 id := board[y][x]
                 dirMove := (dir + 2) % 4
                 if id > '.' && movePossible(id, dirMove) {
-                    fmt.Println("MOVE:", string(rune(id)), x, y, dirMove)
+                    fmt.Println("MOVE:", string(id), dirMove)
+                    makeMove(id, dirMove)
+                    if addPosition() {
+                        printPosition()
+                    } else {
+                        fmt.Println("skip...")
+                    }
+                    makeMove(id, dir)
                 }
             }
         }
     }
+    fmt.Println("SEEN", len(boardsSeen))
+    fmt.Println("TOCHECK", len(boardsToCheck))
+    ur := ""
+    fmt.Scanf("%s", &ur)
 }
 
 func findSquares(id byte) ([][]int) {
@@ -71,4 +156,16 @@ func movePossible(id byte, dir int) (bool) {
         }
     }
     return true
+}
+
+func makeMove(id byte, dir int) {
+    sq := findSquares(id)
+    for _, s := range sq {
+        board[s[1]][s[0]] = '.'
+    }
+    dx := nei[dir][0]
+    dy := nei[dir][1]
+    for _, s := range sq {
+        board[s[1] + dy][s[0] + dx] = id
+    }
 }
