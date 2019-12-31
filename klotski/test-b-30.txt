@@ -1,7 +1,9 @@
-.FDDA
-KF...
-GGBBB
-JJNBH
-IIELC
-MMELC
+ABBBC
+DDBEC
+FGGEH
+FIIJJ
+K...L
+MM.NL
 B-1-4
+
+this takes almost 23 mln seen positions to complete
